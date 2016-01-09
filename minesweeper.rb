@@ -1,26 +1,28 @@
 class Board
+  attr_reader :grid
   def initialize
     @grid = Array.new(9){ Array.new(9) {Tile.new} }
     assign_bombs
+    populate_tiles
     self.render
   end
 
-  def assign_values()
+  def populate_tiles
+    grid.each_with_index do |row, i|
+      row.each_with_index do |tile, j|
 
-
-
-    #iterate over every tile; they know if they're bombs
-    #use a neighbor_bomb_count method to assign one's own number
-    #assign all of this before any rendering happens
-
+        tile.set_grid(self)
+        tile.set_pos(i, j)
+        tile.assign_value
+      end
+    end
   end
 
-
   def render
-    @grid.each_with_index do |row, index|
-      row.each_with_index do |el, j|
+    @grid.each do |row|
+      row.each do |tile|
         # p el.value if el.revealed
-        print "#{el.is_bomb} "
+        print " #{tile.reveal} "
       end
       puts
     end
@@ -28,12 +30,10 @@ class Board
 
   def assign_bombs
     #this doesn't assign the right number of bombs; use shuffle?
-    num_of_bombs = 5
+    num_of_bombs = 10
     num_of_bombs.times do
       @grid[rand(9)][rand(9)].is_bomb = true
     end
-
-
   end
 end
 
@@ -53,13 +53,28 @@ end
 class Tile
 
   attr_accessor :is_bomb
-  attr_reader :revealed
+  attr_reader :revealed, :grid, :value
 
-  def initialize
+  def initialize()
+    @grid = nil
     @revealed = true
     @is_bomb = false
     @value = 0
   end
+
+  def set_grid(board)
+    @grid = board.grid
+  end
+
+  def set_pos(i, j)
+    @pos = [i,j]
+  end
+
+    #iterate over every tile; they know if they're bombs
+    #use a neighbor_bomb_count method to assign one's own number
+    #assign all of this before any rendering happens
+
+
 
   def reveal
     return "💀" if @is_bomb
@@ -69,30 +84,46 @@ class Tile
   end
 
 
+
   def neighbors(row, col)
     neighbors = []
     #i'm so sorry everyone
-    neighbors << [row - 1, col - 1]
-    neighbors << [row, col - 1]
-    neighbors << [row + 1, col - 1]
-    neighbors << [row - 1, col]
-    neighbors << [row + 1, col]
-    neighbors << [row - 1, col + 1]
-    neighbors << [row, col + 1]
-    neighbors << [row + 1, col + 1]
+    neighbors << [row - 1, col - 1] unless row == 0 || col == 0
+    neighbors << [row, col - 1] unless col == 0
+    neighbors << [row + 1, col - 1] unless row == 8 || col == 0
+    neighbors << [row - 1, col] unless row == 0
+    neighbors << [row + 1, col] unless row == 8
+    neighbors << [row - 1, col + 1] unless row == 0 || col == 8
+    neighbors << [row, col + 1] unless col == 8
+    neighbors << [row + 1, col + 1] unless row == 8 || col == 8
     #we could do this with while loops
+    #so, so sorry
     neighbors
-
+    #this is an array of neighbors
   end
-
 
   def neighbor_bomb_count(neighbor_array)
     bomb_count = 0
     neighbor_array.each do |neighbor|
-      bomb_count += 1 if @grid[neighbor_array[0]][neighbor_array[1]].is_bomb
+
+      # next if @grid[neighbor[0]][neighbor[1]].nil?
+      if grid[neighbor[0]][neighbor[1]].is_bomb
+        bomb_count += 1
+      end
     end
-    @value = bomb_count
+    bomb_count
+
   end
+
+  def assign_value
+    # @grid.each_with_index do |row, i|
+    #   row.each_with_index do |tile, j|
+    neighbor_array = neighbors(*@pos)
+    @value = neighbor_bomb_count(neighbor_array)
+    #   end
+    # end
+  end
+
 end
 
 # #reveal, #neighbors, #neighbor_bomb_count
