@@ -130,8 +130,62 @@ end
 
 
 class Game
-  def play
-
-
+  attr_accessor :board
+  def initialize
+    @board = Board.new
   end
+
+
+  def play
+    until game_over?
+      get_player_input
+    end
+  end
+
+
+  def get_player_input
+    puts "Player!"
+    puts "Please input the coordinates you'd like to explore."
+    puts "If you want to flag a position, preface with \"f\"."
+    puts "If you want to explore a condition, preface with \"e\"."
+    puts "In format: letter row column."
+    puts "E.g: f 0 1"
+    puts ">> "
+    input = STDIN.gets.chomp
+    clean_up_user_input(input)
+  end
+
+
+  def clean_up_user_input(input)
+    @letter = input.slice!(0)
+    input = input.split
+    @selected_tile = board.grid[input[0]][input[1]]
+  end
+
+
+  def game_over?
+    puts "YOU WIN!"
+    game_won? || bomb_detonated?
+  end
+
+
+  def game_won?
+    board.grid.each do |row|
+      row.all? do |tile|
+        next if tile.is_bomb
+        tile.revealed
+      end
+    end
+  end
+
+
+  def bomb_detonated?
+    @selected_tile.is_bomb
+  end
+end
+
+
+if __FILE__ == $0
+  game = Game.new
+  game.play
 end
